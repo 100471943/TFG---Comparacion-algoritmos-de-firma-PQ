@@ -123,9 +123,9 @@ void measure_slh_dsa(const std::string& alg_name, const std::string& base_name, 
         bool ok = verifier.check_signature(signature);
         
         if (ok) {
-            std::cout << "Firma VERIFICADA correctamente\n";
+            std::cout << "Firma VERIFICADA correctamente\n\n";
         } else {
-            std::cerr << "Fallo en la verificación de la firma\n";
+            std::cerr << "Fallo en la verificación de la firma\n\n";
             return;
 }
 
