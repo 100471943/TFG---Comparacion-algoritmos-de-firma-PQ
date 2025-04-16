@@ -97,7 +97,7 @@ void measure_slh_dsa(const std::string& alg_name, const std::string& base_name, 
         auto start_sign = std::chrono::high_resolution_clock::now();
         auto cycles_sign_start = cpucycles();
 
-        signer.update(msg);
+        signer.update(msg.data(), msg.size());
         auto signature = signer.signature(rng);
 
         // Mediciones al terminar de firmar el mensaje
@@ -119,10 +119,10 @@ void measure_slh_dsa(const std::string& alg_name, const std::string& base_name, 
         auto start_verify = std::chrono::high_resolution_clock::now();
         auto cycles_verify_start = cpucycles();
 
-        verifier.update(msg);
-        bool ok = verifier.check_signature(signature);
+        verifier.update(msg.data(), msg.size());
+        bool valid = verifier.check_signature(signature.data(), signature.size());
         
-        if (ok) {
+        if (valid) {
             std::cout << "Firma VERIFICADA correctamente\n\n";
         } else {
             std::cerr << "Fallo en la verificación de la firma\n\n";

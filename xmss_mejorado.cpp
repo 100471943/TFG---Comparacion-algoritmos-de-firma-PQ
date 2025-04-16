@@ -86,6 +86,6 @@ void measure_xmss(Botan::XMSS_Parameters::xmss_algorithm_t algo) {
 int main() {
     // Test different configurations
     measure_xmss(Botan::XMSS_Parameters::XMSS_SHAKE_20_512);
-    measure_xmss(Botan::XMSS_Parameters::XMSS_SHA2_10_256);
+    //measure_xmss(Botan::XMSS_Parameters::XMSS_SHA2_10_256);
     return 0;
 }
