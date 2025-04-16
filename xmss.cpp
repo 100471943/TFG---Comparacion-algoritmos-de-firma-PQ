@@ -149,4 +149,4 @@ int main() {
 	
 }
 
-//g++ -std=c++20 xmss.cpp -I/usr/local/include/botan-3/botan -lbotan-3
+//g++ -std=c++20 xmss.cpp -I/usr/local/include/botan-3 -lbotan-3

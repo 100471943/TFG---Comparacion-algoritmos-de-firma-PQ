@@ -25,6 +25,8 @@ long long cpucycles(void){
 };
 
 void measure_xmss(Botan::XMSS_Parameters::xmss_algorithm_t algo) {
+
+    
     try {
         Botan::AutoSeeded_RNG rng;
         
