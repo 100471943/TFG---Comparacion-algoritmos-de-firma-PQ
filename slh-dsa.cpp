@@ -121,6 +121,14 @@ void measure_slh_dsa(const std::string& alg_name, const std::string& base_name, 
 
         verifier.update(msg);
         bool ok = verifier.check_signature(signature);
+        
+        if (ok) {
+            std::cout << "Firma VERIFICADA correctamente\n";
+        } else {
+            std::cerr << "Fallo en la verificación de la firma\n";
+            return;
+}
+
 
         // Mediciones finales de la verificación
         auto cycles_verify_end = cpucycles();
