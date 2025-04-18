@@ -109,6 +109,7 @@ void measure_xmss(const std::string& param_set) {
         Botan::PK_Verifier verifier(pub_key, "");
 
         // Y se verifica la firma del mensaje
+        verifier.update(msg.data(), msg.size());
         if(verifier.check_signature(signature.data(), signature.size())) {
             std::cout << "Firma Verificada." << std::endl;
             

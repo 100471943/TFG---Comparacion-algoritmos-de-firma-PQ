@@ -126,6 +126,7 @@ void measure_slh_dsa(const std::string& alg_name, const std::string& base_name, 
         Botan::PK_Verifier verifier(*pub_key, "Randomized");
         
         // Y se verifica la firma del mensaje
+        verifier.update(msg.data(), msg.size());
         if(verifier.check_signature(signature.data(), signature.size())) {
             std::cout << "Firma Verificada." << std::endl;
             

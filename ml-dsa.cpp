@@ -108,6 +108,7 @@ void measure_mldsa(const Botan::DilithiumMode::Mode mode, const std::string& nom
         Botan::PK_Verifier verifier(*pub_key, "Randomized");
         
         // Y se verifica la firma del mensaje
+        verifier.update(msg.data(), msg.size());
         if(verifier.check_signature(signature.data(), signature.size())) {
             std::cout << "Firma Verificada." << std::endl;
             
