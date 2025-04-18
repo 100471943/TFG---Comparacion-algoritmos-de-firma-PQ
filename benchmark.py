@@ -1,19 +1,20 @@
 import subprocess, csv, re, sys
 
 ALGORITMOS = {
+    0: "TODOS",
     1: "ML-DSA",
     2: "XMSS",
     3: "SLH-DSA"
 }
 
 # Sets de parámetros
-slhdsa_sets = [
+SLHDSA_PARAMS = [
     "SLH-DSA-SHA2-128s", "SLH-DSA-SHA2-128f", "SLH-DSA-SHA2-192s", "SLH-DSA-SHA2-192f",
     "SLH-DSA-SHA2-256s", "SLH-DSA-SHA2-256f", "SLH-DSA-SHAKE-128s", "SLH-DSA-SHAKE-128f",
     "SLH-DSA-SHAKE-192s", "SLH-DSA-SHAKE-192f", "SLH-DSA-SHAKE-256s", "SLH-DSA-SHAKE-256f"
 ]
 
-xmss_sets = [
+XMSS_PARAMS = [
     "XMSS-SHA2_10_256", "XMSS-SHA2_16_256", "XMSS-SHA2_20_256",
     "XMSS-SHA2_10_512", "XMSS-SHA2_16_512", "XMSS-SHA2_20_512",
     "XMSS-SHAKE_10_256", "XMSS-SHAKE_16_256", "XMSS-SHAKE_20_256",
@@ -23,162 +24,172 @@ xmss_sets = [
     "XMSS-SHAKE256_10_192", "XMSS-SHAKE256_16_192", "XMSS-SHAKE256_20_192"
 ]
 
-mldsa_sets = [
+MLDSA_PARAMS = [
     "ML-DSA-4x4",
     "ML-DSA-6x5",
     "ML-DSA-8x7"
 ]
 
-def extract_float(label, text):
-    match = re.search(rf"{re.escape(label)}:\s*([0-9.]+)", text)
-    return float(match.group(1)) if match else -1
+CABECERAS = ["Parametro", "Prehash", "Keygen_tiempo", "Keygen_ciclos","Tamaño_clave_pub", "Tamaño_clave_priv",
+              "Firma_tiempo", "Firma_ciclos", "Tamaño_firma", "Verificacion_tiempo", "Verificacion_ciclos",
+              "Tiempo total", "Ciclos_totales"
+              ]
+            
+# Resultados de los diferntes sets de parámetros
+resultados = []
 
-def extract_int(label, text):
-    match = re.search(rf"{re.escape(label)}:\s*([0-9]+)", text)
-    return int(match.group(1)) if match else -1
+# Formato de salida CSV
+datos = [CABECERAS]
 
-def build_slhdsa_param(param, with_prehash):
-    if not with_prehash:
-        return param
-    if "128" in param:
-        hash_str = "SHA256" if "SHA2" in param else "SHAKE128"
-    elif "192" in param:
-        hash_str = "SHA512" if "SHA2" in param else "SHAKE256"
-    elif "256" in param:
-        hash_str = "SHA512" if "SHA2" in param else "SHAKE256"
-    return f"Hash-{param}-with-{hash_str}"
+# Contador de fallos. Un benchmark de un set falla cuando hay un error en la ejecución o la firma no se verifica correctamente.
+FALLOS = 0 
+
+# Función para extraer el valor de la línea
+def extraer_valor(linea: str):
+    """
+    Busca un número en la línea y lo convierte a int o float.
+    Si no hay número, devuelve None.
+    """
+    coincidencia = re.search(r"[-+]?\d*\.\d+|\d+", linea)
+    if coincidencia:
+        valor_str = coincidencia.group(0)
+        # Convertir a float si contiene punto decimal, si no, a int
+        return float(valor_str) if '.' in valor_str else int(valor_str)
+    return None
+
+
+def escribirCSV(algoritmo):
+    try:
+        with open(f"{algoritmo}-Resultados.csv", mode="w", newline="") as archivo:
+                writer = csv.writer(archivo)
+                writer.writerows(datos)
+
+        archivo.close()
+            
+        print(f"\nResultados guardados en '{algoritmo}-Resultados.csv'")
+        
+    except Exception as e:
+        print(f"Error al guardar los resultados: {e}")
+        sys.exit(1)
+
+
+def extraer_resultados(salida):
+    global resultados,datos, CABECERAS
+    """
+    Extrae los resultados de la salida del comando y los guarda en un csv.
+    """
+    # En este punto resultados ya tiene los dos primeros valores (parametro y prehash)
+    # El resto de valores van a venir en orden.
+    for linea in salida.splitlines():
+        valor = extraer_valor(linea)
+        if valor is not None:
+            resultados.append(valor)
+
+    # Se calculan los ciclos totales y el tiempo total
+    ciclos_totales = resultados[3] + resultados[7] + resultados[10]
+    tiempo_total = resultados[2] + resultados[6] + resultados[9]
+    resultados.append(tiempo_total)
+    resultados.append(ciclos_totales)
+
+    # Se añaden los resultados a la lista de datos
+    datos.append(resultados)
+    return 0
+
+
+def ejecutar_comando(algoritmo, param, prehash=3): # PreHash = 3 -> No se utiliza en este algoritmo.
+    """
+    Ejecuta un comando en la terminal y devuelve la salida.
+    """
+    print(f"\n[+] EJECUTANDO {param}", end="")
+    comando = [f"./{algoritmo}", param]
+    if prehash!= 3:
+        print(f"(prehash={"Sí" if prehash else "No"})")
+        comando.insert(1, str(prehash))
+
+
+    resultado = subprocess.run(
+        comando,
+        capture_output=True,
+        text=True,
+    )
+    salida = resultado.stdout
+    if resultado.returncode != 0:
+        print(f"Error en la ejecución de {param} (prehash={"Sí" if prehash else "No"})")
+             
+    # Extraer los resultados de la salida
+    extraer_resultados(salida)
+    return resultado.returncode
+
 
 if __name__ == "__main__":
 
     print("\n------------------ EJECUCIÓN AUTOMÁTICA DE BENCHMARK COMPLETO ------------------\n")
+
     print("[+] SELECCIONA EL ALGORITMO:\n")
 
+    
+    print("[0] Todos los algoritmos")
     for key, algoritmo in ALGORITMOS.items():
         print(f"[{key}] {algoritmo}")
+    
 
     try:
         num_algo = int(input("\n>> "))
-        if num_algo not in ALGORITMOS:
+        if num_algo not in ALGORITMOS or num_algo != 0:
             raise Exception
     except:
-        print("\nIntroduce únicamente el número [1,2,3].")
+        print("\nIntroduce únicamente el número [0,1,2,3].")
         sys.exit(1)
 
     algoritmo = ALGORITMOS[num_algo]
-    executable = f"./{algoritmo}"
-    output_file = f"{algoritmo}_Resultados.csv"
+    
+    
+    print("\n[+] EJECUTANDO BENCHMARK PARA EL ALGORITMO:", algoritmo)
 
-    header = ["Parametro", "Prehash", "Keygen_tiempo", "Keygen_ciclos",
-              "Firma_tiempo", "Firma_ciclos", "Verificacion_tiempo", "Verificacion_ciclos",
-              "Tamaño_clave_pub", "Tamaño_clave_priv", "Tamaño_firma"]
-
-    results = []
-
-    if algoritmo == "SLH-DSA":
+    if algoritmo == "SLH-DSA" or algoritmo == "TODOS":
+        algoritmo = "SLH-DSA"
         for prehash in [0, 1]:
-            for param in slhdsa_sets:
-                nombre = build_slhdsa_param(param, prehash)
-                print(f"\n[+] Ejecutando {nombre}")
-                try:
-                    result = subprocess.run(
-                        [executable, str(prehash), param],
-                        capture_output=True,
-                        timeout=60
-                    )
-                    output = result.stdout.decode()
-                    if result.returncode != 0:
-                        print("❌ Error:", result.stderr.decode())
-                        continue
+            for param in SLHDSA_PARAMS:
 
-                    row = [
-                        param,
-                        prehash,
-                        extract_float("Tiempo de ejecución", output.split("RESULTADOS DE GENERACIÓN DE CLAVES")[1]),
-                        extract_int("Ciclos de CPU", output.split("RESULTADOS DE GENERACIÓN DE CLAVES")[1]),
-                        extract_float("Tiempo de ejecución", output.split("RESULTADOS DE GENERACIÓN DE FIRMA")[1]),
-                        extract_int("Ciclos de CPU", output.split("RESULTADOS DE GENERACIÓN DE FIRMA")[1]),
-                        extract_float("Tiempo de ejecución", output.split("RESULTADOS DE VERIFICACIÓN DE FIRMA")[1]),
-                        extract_int("Ciclos de CPU", output.split("RESULTADOS DE VERIFICACIÓN DE FIRMA")[1]),
-                        extract_int("Tamaño de la clave pública", output),
-                        extract_int("Tamaño de la clave privada", output),
-                        extract_int("Tamaño de la firma", output)
-                    ]
+                resultados = [param]
+                if prehash == 0:
+                    resultados.append("No")
+                else:
+                    resultados.append("Sí")
 
-                    results.append(row)
+                code = ejecutar_comando(algoritmo, param, prehash)
+                if code != 0:
+                    FALLOS += 1
 
-                except subprocess.TimeoutExpired:
-                    print(f"⏰ Timeout en {param} (prehash={prehash})")
+        # Una vez se han probado todos los parámetros, se guardan los resultados en el CSV\
+        escribirCSV(algoritmo)
+        
+    if algoritmo == "XMSS" or algoritmo == "TODOS":
+        algoritmo = "XMSS"
+        for param in XMSS_PARAMS:
 
-    elif algoritmo == "XMSS":
-        for param in xmss_sets:
-            print(f"\n[+] Ejecutando {param}")
-            try:
-                result = subprocess.run(
-                    [executable, param],
-                    capture_output=True,
-                    timeout=60
-                )
-                output = result.stdout.decode()
-                if result.returncode != 0:
-                    print("❌ Error:", result.stderr.decode())
-                    continue
+            resultados = [param, "N/A"]
 
-                row = [
-                    param,
-                    "-",  # no prehash
-                    extract_float("Tiempo de ejecución", output.split("RESULTADOS DE GENERACIÓN DE CLAVES")[1]),
-                    extract_int("Ciclos de CPU", output.split("RESULTADOS DE GENERACIÓN DE CLAVES")[1]),
-                    extract_float("Tiempo de ejecución", output.split("RESULTADOS DE GENERACIÓN DE FIRMA")[1]),
-                    extract_int("Ciclos de CPU", output.split("RESULTADOS DE GENERACIÓN DE FIRMA")[1]),
-                    extract_float("Tiempo de ejecución", output.split("RESULTADOS DE VERIFICACIÓN DE FIRMA")[1]),
-                    extract_int("Ciclos de CPU", output.split("RESULTADOS DE VERIFICACIÓN DE FIRMA")[1]),
-                    extract_int("Tamaño de la clave pública", output),
-                    extract_int("Tamaño de la clave privada", output),
-                    extract_int("Tamaño de la firma", output)
-                ]
+            code = ejecutar_comando(algoritmo, param, prehash)
 
-                results.append(row)
+            if code != 0:
+                FALLOS += 1
 
-            except subprocess.TimeoutExpired:
-                print(f"⏰ Timeout en {param}")
+        # Una vez se han probado todos los parámetros, se guardan los resultados en el CSV\
+        escribirCSV(algoritmo)
 
-    elif algoritmo == "ML-DSA":
-        for param in mldsa_sets:
-            print(f"\n[+] Ejecutando {param}")
-            try:
-                result = subprocess.run(
-                    [executable, param],
-                    capture_output=True,
-                    timeout=60
-                )
-                output = result.stdout.decode()
-                if result.returncode != 0:
-                    print("❌ Error:", result.stderr.decode())
-                    continue
+    if algoritmo == "ML-DSA" or algoritmo == "TODOS":
+        algoritmo = "ML-DSA"
+        for param in MLDSA_PARAMS:
+            resultados = [param, "N/A"]
 
-                row = [
-                    param,
-                    "-",  # no prehash
-                    extract_float("Tiempo de ejecución", output.split("RESULTADOS DE GENERACIÓN DE CLAVES")[1]),
-                    extract_int("Ciclos de CPU", output.split("RESULTADOS DE GENERACIÓN DE CLAVES")[1]),
-                    extract_float("Tiempo de ejecución", output.split("RESULTADOS DE GENERACIÓN DE FIRMA")[1]),
-                    extract_int("Ciclos de CPU", output.split("RESULTADOS DE GENERACIÓN DE FIRMA")[1]),
-                    extract_float("Tiempo de ejecución", output.split("RESULTADOS DE VERIFICACIÓN DE FIRMA")[1]),
-                    extract_int("Ciclos de CPU", output.split("RESULTADOS DE VERIFICACIÓN DE FIRMA")[1]),
-                    extract_int("Tamaño de la clave pública", output),
-                    extract_int("Tamaño de la clave privada", output),
-                    extract_int("Tamaño de la firma", output)
-                ]
+            code = ejecutar_comando(algoritmo, param, prehash)
+            
+            if code != 0:
+                FALLOS += 1
 
-                results.append(row)
+        # Una vez se han probado todos los parámetros, se guardan los resultados en el CSV\
+        escribirCSV(algoritmo)
 
-            except subprocess.TimeoutExpired:
-                print(f"⏰ Timeout en {param}")
-
-    # Guardar CSV
-    with open(output_file, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        writer.writerows(results)
-
-    print(f"\n✅ Resultados guardados en '{output_file}'")
+    print("\n[+] BENCHMARK FINALIZADO")
+    print(f"[+] FALLOS: {FALLOS}")
