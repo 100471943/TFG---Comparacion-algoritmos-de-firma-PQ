@@ -153,101 +153,125 @@ void measure_slh_dsa(const std::string& alg_name, const std::string& base_name, 
     }
 }
 
-int main()
+
+//g++ -std=c++20 slh-dsa.cpp -I/usr/local/include/botan-3 -lbotan-3 -o SLH-DSA
+
+int main(int argc, char* argv[])
 {
-    // Preguntamos al usuario si quiere prehash o no
-    std::cout << "¿Deseas usar prehash?\n";
-    std::cout << "  0) No\n";
-    std::cout << "  1) Sí\n";
-    std::cout << "> ";
-    int opt = 0;
-    std::cin >> opt;
-    bool with_prehash = (opt == 1);
-
-    // En este punto la variable with_prehash almacena un booleano en funcion de si se quiere pre-hash o no.
-
-    // Creamos un vector con los 12 posibles sets de parámetros que tiene SLH-DSA
+ 
+    // Vector con los 12 posibles sets de parámetros
     std::vector<std::string> slhdsa_sets = {
-        "SLH-DSA-SHA2-128s",   
-        "SLH-DSA-SHA2-128f",   
-        "SLH-DSA-SHA2-192s",   
-        "SLH-DSA-SHA2-192f",   
-        "SLH-DSA-SHA2-256s",   
-        "SLH-DSA-SHA2-256f",  
-        "SLH-DSA-SHAKE-128s", 
-        "SLH-DSA-SHAKE-128f",  
-        "SLH-DSA-SHAKE-192s",  
-        "SLH-DSA-SHAKE-192f",  
-        "SLH-DSA-SHAKE-256s",  
-        "SLH-DSA-SHAKE-256f"   
+        "SLH-DSA-SHA2-128s", "SLH-DSA-SHA2-128f", "SLH-DSA-SHA2-192s", "SLH-DSA-SHA2-192f",
+        "SLH-DSA-SHA2-256s", "SLH-DSA-SHA2-256f", "SLH-DSA-SHAKE-128s", "SLH-DSA-SHAKE-128f",
+        "SLH-DSA-SHAKE-192s", "SLH-DSA-SHAKE-192f", "SLH-DSA-SHAKE-256s", "SLH-DSA-SHAKE-256f"
     };
 
-    // Damos a elegir al usuario uno de los sets de parámetros.
-    std::cout << "\nElige uno de los sets de parámetros SLH-DSA:\n";
-    for(size_t i = 0; i < slhdsa_sets.size(); ++i) {
-        std::cout << "  " << i << ") " << slhdsa_sets[i] << "\n";
-    }
-    std::cout << "> ";
-    int choice = 0;
-    std::cin >> choice;
-    // Almacenamos la eleccion en choice
 
+
+    bool with_prehash = false; // Si se quiere utilizar preHash
+    std::string base_name;     // Nombre base del set de parámetros
+    std::string setParametro;  // Nombre final Botan (incluyendo prehash o no)
+
+
+    /*
+    DOS POSIBLES USOS DEL SCRIPT: 
+    [1] -> Pasando el uso del prehash y el set de parámetros por parámetros al ejecutar: 
+            ./SLH-DSA WITH_PREHASH NOMRE_SET
+            1 = con preHash, 0 = sin preHash
+            Ejemplo: 
+            ./SLH-DSA 1 SLH-DSA-SHA2-128s  
+    
+    [2] -> Modo interactivo después de ejecutar normal el script
+           ./SLH-DSA
+    
+    
+    */ 
+
+
+   // Caso 1
+    if(argc == 3)
+    {
+        // Leer argumentos desde línea de comandos
+        with_prehash = (std::string(argv[1]) == "1");
+        base_name = argv[2];
+
+
+        // Se busca el set
+        auto it = std::find(slhdsa_sets.begin(), slhdsa_sets.end(), base_name);
+        if(it == slhdsa_sets.end()) {
+            std::cerr << "Set de parámetros inválido.\n";
+            return 1;
+        }
+
+        int choice = std::distance(slhdsa_sets.begin(), it);
+
+        // Caso con prehash
+        if(with_prehash)
+        {
+            // Se elige el prehash a utilizar en función del set elegido.
+            std::string preHash;
+            if(choice <= 1) preHash = "SHA256";
+            else if(choice <= 5) preHash = "SHA512";
+            else if(choice <= 7) preHash = "SHAKE128";
+            else preHash = "SHAKE256";
+
+            setParametro = "Hash-" + base_name + "-with-" + preHash;
+        }
+        // Si no se utiliza prehash, se utiliza directamente el nombre base del set de parámetros
+        else {
+            setParametro = base_name;
+        }
+    }
+    else if(argc == 1)
+    {
+        // --- Modo interactivo ---
+        std::cout << "¿Deseas usar prehash?\n  0) No\n  1) Sí\n> ";
+        int opt = 0;
+        std::cin >> opt;
+        with_prehash = (opt == 1);
+
+        std::cout << "\nElige uno de los sets de parámetros SLH-DSA:\n";
+        for(size_t i = 0; i < slhdsa_sets.size(); ++i) {
+            std::cout << "  " << i << ") " << slhdsa_sets[i] << "\n";
+        }
+        std::cout << "> ";
+        int choice = 0;
+        std::cin >> choice;
+
+        if(choice < 0 || static_cast<size_t>(choice) >= slhdsa_sets.size()) {
+            std::cerr << "Opción inválida\n";
+            return 1;
+        }
+
+        // Se coge el nombre base elegido
+        base_name = slhdsa_sets[choice];
+
+        // Caso de elegir con preHash
+        if(with_prehash)
+        {
+            // Se elige el prehash a utilizar en función del set elegido.
+            std::string preHash;
+            if(choice <= 1) preHash = "SHA256";
+            else if(choice <= 5) preHash = "SHA512";
+            else if(choice <= 7) preHash = "SHAKE128";
+            else preHash = "SHAKE256";
+
+            setParametro = "Hash-" + base_name + "-with-" + preHash;
+        }
+        else {
+            setParametro = base_name;
+        }
+    }
     // Control de errores
-    if(choice < 0 || static_cast<size_t>(choice) >= slhdsa_sets.size()) {
-        std::cerr << "Opción inválida\n";
+    else
+    {
+        std::cerr << "Uso incorrecto.\n";
+        std::cerr << "Modo interactivo: ./SLH-DSA\n";
+        std::cerr << "Modo automático:  ./SLH-DSA <with_prehash: 0|1> <set_de_parametros>\n";
         return 1;
     }
 
-    // 3) Construimos el nombre final que utiliza Botan
-    std::string base_name = slhdsa_sets[choice]; // Nombre base del set
-    
-    // Cuando se utiliza prehash, Botan forma el nombre de la siguiente manera:
-    // Hash-[NOMBRE_BASE]-with-[HASH_UTILIZADO_PARA_PREHASH]
-
-    
-
-    // Definimos la variable que contendrá el nombre final
-    std::string setParametro;
-
-    // Si con prehash, añadimos la parte "Hash-" y "-with-..."
-    if(with_prehash)
-    {
-    // Decidimos qué hash usar de acuerdo a 'choice'
-  
-    std::string preHash;
-
-    if(choice <= 1) // Se ha elegido Sha128 => prehash SHA256
-         {
-        preHash = "SHA256";
-        }
-    else if(choice <= 5) // Se ha elegido Sha192/Sha256 => prehash SHA512
-        {
-        preHash = "SHA512";
-        }
-    else if(choice <= 7)  // Se ha elegido Shake128 => prehash Shake128
-        {
-        preHash = "SHAKE128";
-        }
-    else // Se ha elegido Shake192/256 => prehash Shake256
-        {
-        preHash = "SHAKE256";
-        }
-
-    // Se forma el nombre completo
-    setParametro = "Hash-" + base_name + "-with-" + preHash;
-    }
-
-    // No se ha elegido utilziar prehash
-    else{
-    // Sin prehash => nombre tal cual
-    setParametro = base_name;
-    }
-
-    //Ejecutamos la medición
+    // Una vez seleccionadas las elecciones, se llama a la función principal para medir.
     measure_slh_dsa(setParametro, base_name, with_prehash);
-
     return 0;
 }
-
-
-//g++ -std=c++20 slh-dsa.cpp -I/usr/local/include/botan-3 -lbotan-3 -o SLH-DSA
