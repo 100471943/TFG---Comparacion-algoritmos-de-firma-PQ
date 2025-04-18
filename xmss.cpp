@@ -132,8 +132,9 @@ void measure_xmss(const std::string& param_set) {
     }
 }
 
-int main() {
-    // Creamos un vector con los posibles sets de parámetros que tiene XMSS
+int main(int argc, char* argv[])
+{
+    // Vector con los posibles sets de parámetros que tiene XMSS
     std::vector<std::string> xmss_sets = {
         "XMSS-SHA2_10_256", "XMSS-SHA2_16_256", "XMSS-SHA2_20_256",
         "XMSS-SHA2_10_512", "XMSS-SHA2_16_512", "XMSS-SHA2_20_512",
@@ -144,22 +145,60 @@ int main() {
         "XMSS-SHAKE256_10_192", "XMSS-SHAKE256_16_192", "XMSS-SHAKE256_20_192"
     };
 
-    // Proceso de elección del set
-    std::cout << "\nElige uno de los sets de parámetros XMSS:\n";
-    for(size_t i = 0; i < xmss_sets.size(); ++i) {
-        std::cout << "  " << i << ") " << xmss_sets[i] << "\n";
-    }
-    std::cout << "> ";
-    int choice = 0;
-    std::cin >> choice;
+    std::string set_param; // Nombre del set de parámetros
 
-    if(choice < 0 || static_cast<size_t>(choice) >= xmss_sets.size()) {
-        std::cerr << "Opcion invalida.\n";
+    /*
+    DOS POSIBLES USOS DEL SCRIPT: 
+    [1] -> Pasando el set de parámetros por argumento al ejecutar:
+            ./XMSS NOMBRE_SET
+            Ejemplo: 
+            ./XMSS XMSS-SHA2_20_256  
+    
+    [2] -> Modo interactivo si no se pasa ningún parámetro:
+           ./XMSS
+    */
+
+    // Caso 1: Set de parámetros pasado por línea de comandos
+    if(argc == 2)
+    {
+        set_param = argv[1];
+
+        // Comprobamos si el set existe
+        auto it = std::find(xmss_sets.begin(), xmss_sets.end(), set_param);
+        if(it == xmss_sets.end()) {
+            std::cerr << "Set de parámetros inválido.\n";
+            return 1;
+        }
+    }
+    // Caso 2: Modo interactivo
+    else if(argc == 1)
+    {
+        std::cout << "\nElige uno de los sets de parámetros XMSS:\n";
+        for(size_t i = 0; i < xmss_sets.size(); ++i) {
+            std::cout << "  " << i << ") " << xmss_sets[i] << "\n";
+        }
+        std::cout << "> ";
+        int choice = 0;
+        std::cin >> choice;
+
+        if(choice < 0 || static_cast<size_t>(choice) >= xmss_sets.size()) {
+            std::cerr << "Opción inválida.\n";
+            return 1;
+        }
+
+        // Se guarda el set de parámetros elegido
+        set_param = xmss_sets[choice];
+    }
+    // Caso de uso incorrecto
+    else
+    {
+        std::cerr << "Uso incorrecto.\n";
+        std::cerr << "Modo interactivo: ./XMSS\n";
+        std::cerr << "Modo automático:  ./XMSS <set_de_parametros>\n";
         return 1;
     }
 
-    // Una vez elegido un set correcto, se llama a la función
-    std::string set_param = xmss_sets[choice];
+    // Llamamos a la función principal con el set elegido
     measure_xmss(set_param);
 
     return 0;

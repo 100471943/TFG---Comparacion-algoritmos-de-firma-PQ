@@ -132,29 +132,76 @@ void measure_mldsa(const Botan::DilithiumMode::Mode mode, const std::string& nom
     }
 }
 
-int main() {
-
-    // Vector con los 3 posibles modos de ml-dsa
+int main(int argc, char* argv[])
+{
+    // Vector con los 3 posibles modos de ML-DSA
     std::vector<std::pair<std::string, Botan::DilithiumMode::Mode>> mldsa_sets = {
         {"ML-DSA-4x4", Botan::DilithiumMode::ML_DSA_4x4},
         {"ML-DSA-6x5", Botan::DilithiumMode::ML_DSA_6x5},
         {"ML-DSA-8x7", Botan::DilithiumMode::ML_DSA_8x7}
     };
 
-    std::cout << "\nElige uno de los modos de  ML-DSA:\n";
-    for(size_t i = 0; i < mldsa_sets.size(); ++i) {
-        std::cout << "  " << i << ") " << mldsa_sets[i].first << "\n";
-    }
-    std::cout << "> ";
-    int choice = 0;
-    std::cin >> choice;
+    std::string nombre_parametro;               // Nombre string del set elegido
+    Botan::DilithiumMode::Mode modo_seleccionado; // Enum correspondiente
 
-    if(choice < 0 || static_cast<size_t>(choice) >= mldsa_sets.size()) {
-        std::cerr << "Opción inválida\n";
+    /*
+    DOS POSIBLES USOS DEL SCRIPT: 
+    [1] -> Pasando el set de parámetros como argumento:
+            ./ML-DSA NOMBRE_SET
+            Ejemplo:
+            ./ML-DSA ML-DSA-4x4
+
+    [2] -> Modo interactivo si no se pasa ningún argumento:
+            ./ML-DSA
+    */
+
+    // --- Caso 1: modo automático con argumento ---
+    if(argc == 2)
+    {
+        nombre_parametro = argv[1];
+
+        // Buscar el modo correspondiente
+        auto it = std::find_if(
+            mldsa_sets.begin(), mldsa_sets.end(),
+            [&](const auto& pair) { return pair.first == nombre_parametro; });
+
+        if(it == mldsa_sets.end()) {
+            std::cerr << "Set de parámetros inválido.\n";
+            return 1;
+        }
+
+        modo_seleccionado = it->second;
+    }
+    // --- Caso 2: modo interactivo ---
+    else if(argc == 1)
+    {
+        std::cout << "\nElige uno de los modos de ML-DSA:\n";
+        for(size_t i = 0; i < mldsa_sets.size(); ++i) {
+            std::cout << "  " << i << ") " << mldsa_sets[i].first << "\n";
+        }
+        std::cout << "> ";
+        int choice = 0;
+        std::cin >> choice;
+
+        if(choice < 0 || static_cast<size_t>(choice) >= mldsa_sets.size()) {
+            std::cerr << "Opción inválida\n";
+            return 1;
+        }
+
+        nombre_parametro = mldsa_sets[choice].first;
+        modo_seleccionado = mldsa_sets[choice].second;
+    }
+    // --- Error de uso ---
+    else
+    {
+        std::cerr << "Uso incorrecto.\n";
+        std::cerr << "Modo interactivo: ./ML-DSA\n";
+        std::cerr << "Modo automático:  ./ML-DSA <set_de_parametros>\n";
         return 1;
     }
 
-    // Una vez seleccionado el modo, lanzamos las mediciones.
-    measure_mldsa(mldsa_sets[choice].second, mldsa_sets[choice].first);
+    // Ejecutamos la evaluación de rendimiento
+    measure_mldsa(modo_seleccionado, nombre_parametro);
+
     return 0;
 }
