@@ -53,7 +53,7 @@ void measure_slh_dsa(const std::string& alg_name, const std::string& base_name, 
             return;
         }
 
-        // Print inicial.
+        
 
         std::cout << "EVALUACIÓN DE RENDIMIENTO DEL ALGORITMO SLH-DSA" << "\n"
                   << "SET DE PARÁMETROS UTILIZADOS: " << base_name << "\n"
@@ -72,7 +72,11 @@ void measure_slh_dsa(const std::string& alg_name, const std::string& base_name, 
         Botan::SLH_DSA_PrivateKey priv_key(rng, params);
 
         // A partir de la clave privada derivamos la pública.
-        Botan::SLH_DSA_PublicKey pub_key = priv_key;
+        //Botan::SLH_DSA_PublicKey pub_key = priv_key;
+        auto pub_key = priv_key.public_key();
+
+        // Se crea el firmador con la clave privada
+        Botan::PK_Signer signer(priv_key, rng, "Randomized");
 
         // Tomamos mediciones cuando termina el proceso de keygen
         auto cycles_keygen_end = cpucycles();
@@ -83,22 +87,21 @@ void measure_slh_dsa(const std::string& alg_name, const std::string& base_name, 
                   << "Tiempo de ejecución: " << std::chrono::duration<double>(end_keygen - start_keygen).count() << "s\n"
                   << "Ciclos de CPU: " << (cycles_keygen_end - cycles_keygen_start) << " ciclos\n";
 
-        auto pk_bits = pub_key.public_key_bits();
-        auto sk_bits = priv_key.private_key_bits();
+        
 
-        std::cout << "Tamaño de la clave pública: " << pk_bits.size() << " bytes\n";
-        std::cout << "Tamaño de la clave privada: " << sk_bits.size() << " bytes\n\n\n";
+        std::cout << "Tamaño de la clave pública: " << pub_key->public_key_bits().size() << " bytes\n";
+        std::cout << "Tamaño de la clave privada: " << priv_key.private_key_bits().size() << " bytes\n\n\n";
 
         // -------------- GENERACIÓN DE FIRMA -----------------------
-        Botan::PK_Signer signer(priv_key, rng, "Deterministic");
         Botan::secure_vector<uint8_t> msg{0x01, 0x02, 0x03, 0x04}; // Mismo mensaje de 4 bytes para los 3 algoritmos que evaluamos.
-
-        // Mediciones inicales de la firma
+        
+        // Mediciones iniciales de la firma
         auto start_sign = std::chrono::high_resolution_clock::now();
         auto cycles_sign_start = cpucycles();
-
-        signer.update(msg.data(), msg.size());
-        auto signature = signer.signature(rng);
+        
+        // Se firma el mensaje
+        signer.update(msg.data(), msg.size()); 
+	    std::vector<uint8_t> signature = signer.signature(rng);
 
         // Mediciones al terminar de firmar el mensaje
         auto cycles_sign_end = cpucycles();
@@ -113,21 +116,23 @@ void measure_slh_dsa(const std::string& alg_name, const std::string& base_name, 
         
 
         // -------------- VERIFICACIÓN DE FIRMA -----------------------
-        Botan::PK_Verifier verifier(pub_key, "Deterministic");
+        
 
         // Mediciones inicales de la verificación
         auto start_verify = std::chrono::high_resolution_clock::now();
         auto cycles_verify_start = cpucycles();
 
-        verifier.update(msg.data(), msg.size());
-        bool valid = verifier.check_signature(signature.data(), signature.size());
+        // Se genera el verificador, utilizando la versión hedged.
+        Botan::PK_Verifier verifier(*pub_key, "Randomized");
         
-        if (valid) {
-            std::cout << "Firma VERIFICADA correctamente\n\n";
+        // Y se verifica la firma del mensaje
+        if(verifier.check_signature(signature.data(), signature.size())) {
+            std::cout << "Firma Verificada." << std::endl;
+            
         } else {
-            std::cerr << "Fallo en la verificación de la firma\n\n";
-            return;
-}
+            std::cout << "Firma Errónea." << std::endl;
+            
+        }
 
 
         // Mediciones finales de la verificación

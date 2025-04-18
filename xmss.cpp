@@ -1,11 +1,10 @@
-#include <botan/auto_rng.h> // Para generar números aleatorios mediante RNG
-#include <botan/pubkey.h>   // Para la gestión de las claves
-#include <botan/secmem.h>   // Para el almacenamiento seguro en memoria
-#include <botan/xmss.h>     // El propio algoritmo de firma XMSS
+#include <botan/auto_rng.h>
+#include <botan/pubkey.h>
+#include <botan/xmss.h>
+#include <chrono>
 #include <iostream>
+#include <string>
 #include <vector>
-#include <ctime>            // Para medir los tiempos de ejecución
- 
 
 // Función para medir ciclos de CPU
 long long cpucycles(void){
@@ -22,131 +21,145 @@ long long cpucycles(void){
   return result;
 };
 
-// Ejecución principal del algoritmo, incluyendo las diferentes mediciones.
-int main() {
-	/*
-    El objetivo principal de este programa es medir el tiempo y los ciclos de cpu consumidos 
-    en todo el proceso de firma y verificación (de la firma) de un mensaje de 4 bytes {0x01, 0x02, 0x03, 0x04}
-    Se hacen mediciones sobre la generación de las claves, el proceso de firma del mensaje y la verificación
-    de la propia firma.
 
-    El resultado de estas mediciones se imprimirá por consola, expresando cada una en segundos y ciclos de cpu
+// Función principal
+void measure_xmss(const std::string& param_set) {
+     /*
+    Esta función recibe por parámetros el set de parámetros a utilizar.
 
+    Se encarga de evaluar el tiempo de ejecución y ciclos de CPU consumidos en los tres procesos principales 
+    en un esquema de firma:
+    - Generación de claves
+    - Firma de un mensaje
+    - Verificación de firma
+
+    A medida que termine cada proceso, se imprimirán las mediciones del mismo.
     */
-    
-    // Las variables TT* almacenan los ciclos de CPU consumidos en diferentes instantes.
-	unsigned long long TT0,TT1,TT2,TT3, TT4;
+    try {
+        Botan::AutoSeeded_RNG rng;
 
-    // Las variables t* almacenan el tiempo de ejecución en diferentes instantes.
-	unsigned long long t0, t1, t2, t3, t4;
-	
-    // -------------------------------------- INICIO DEL ALGORITMO DE FIRMA --------------------------------------
-    
-    t0=t1=t2=t3=t4=clock(); // Se inicializan todas con el instante inicial del algoritmo.
-    TT0,TT1,TT2,TT3, TT4=cpucycles(); // Lo mismo para los ciclos de CPU
+        
 
-    // Se instancia un generador de números aleatorios criptográficamente seguro.
-	Botan::AutoSeeded_RNG rng1;
-	
+        std::cout << "EVALUACIÓN DE RENDIMIENTO DEL ALGORITMO XMSS\n";
+        std::cout << "SET DE PARÁMETROS UTILIZADOS: " << param_set << "\n\n";
 
-    // ----------- GENERACIÓN DE CLAVES -------------
-	
-	// create a new public/private key pair using SHA2 256 as hash
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHA2_10_256, rng1);
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHA2_16_256, rng1);
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHA2_20_256, rng1);
-	
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHA2_10_512, rng1);
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHA2_16_512, rng1);
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHA2_20_512, rng1);
-	
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHAKE_10_256, rng1);
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHAKE_16_256, rng1);
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHAKE_20_256, rng1);
-	
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHAKE_10_512, rng1);
-	//Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHAKE_16_512, rng1);
-	
-    // Se genera una clave privada (con el tipo de dato propio de Botan para las sk de XMSS)
-    // En este caso se utiliza SHAKE con una estructura de 20 niveles y clave de 512 bits, además del RNG previamente instanciado
-    Botan::XMSS_PrivateKey private_key1(Botan::XMSS_Parameters::xmss_algorithm_t::XMSS_SHAKE_20_512, rng1);
-	
-    // A partir de la clave privada se extrae la clave pública
-	const Botan::XMSS_PublicKey& public_key1(private_key1);
-
-	// Se crea el "firmador" (objeto instanciado que se encarga de firmar mensajes con la clave privada)
-	Botan::PK_Signer signer1(private_key1, rng1, "");
+        // ---------------------- GENERACIÓN DE CLAVES ----------------------
+        // Tomamos mediciones de tiempo y ciclos iniciales
+        auto start_keygen = std::chrono::high_resolution_clock::now();
+        auto cycles_keygen_start = cpucycles();
 
 
-    // Como ya ha termiando el proceso de generar las claves, se mide para este instante:
+        Botan::XMSS_Parameters::xmss_algorithm_t algo_id = Botan::XMSS_Parameters::xmss_id_from_string(param_set);
 
-    t1=clock(); // El tiempo de ejecución
-    TT1= cpucycles(); // Los ciclos de CPU consumidos
+        // Generamos la clave privada con el set de parámetros correcto
+        Botan::XMSS_PrivateKey priv_key(algo_id, rng);
+        
+        // A partir de la clave privada derivamos la pública.
+        const Botan::XMSS_PublicKey& pub_key(priv_key);
 
-    // Y se imprimen las mediciones por pantalla
-	std::cout << "Tiempo transcurrido para la generación de claves: " << (double(t1-t0)/CLOCKS_PER_SEC) << " sg."<< std::endl;
-    std::cout << "Ciclos de CPU consumidos para la generación de claves: " << TT1-TT0 << std::endl;
+        // Se crea el firmador con la clave privada
+        Botan::PK_Signer signer(priv_key, rng, "");
+
+        // Tomamos mediciones cuando termina el proceso de keygen
+        auto cycles_keygen_end = cpucycles();
+        auto end_keygen = std::chrono::high_resolution_clock::now();
+
+        // Imprimimos las primeras mediciones.
+        std::cout << "RESULTADOS DE GENERACIÓN DE CLAVES\n"
+                  << "Tiempo de ejecución: " << std::chrono::duration<double>(end_keygen - start_keygen).count() << "s\n"
+                  << "Ciclos de CPU: " << (cycles_keygen_end - cycles_keygen_start) << " ciclos\n";
+
+        auto pk_bits = pub_key.public_key_bits();
+        auto sk_bits = priv_key.private_key_bits();
+
+        std::cout << "Tamaño de la clave pública: " << pk_bits.size() << " bytes\n";
+        std::cout << "Tamaño de la clave privada: " << sk_bits.size() << " bytes\n\n\n";
+
+        // --------------- GENERACIÓN DE FIRMA -----------------------
+        
+        // Mensaje fijo a firmar
+        Botan::secure_vector<uint8_t> msg{0x01, 0x02, 0x03, 0x04};
+        
+        // Mediciones iniciales de la firma
+        auto start_sign = std::chrono::high_resolution_clock::now();
+        auto cycles_sign_start = cpucycles();
+
+        // Se firma el mensaje
+        signer.update(msg.data(), msg.size()); 
+	    std::vector<uint8_t> signature = signer.signature(rng);
+
+        // Mediciones al terminar de firmar el mensaje
+        auto cycles_sign_end = cpucycles();
+        auto end_sign = std::chrono::high_resolution_clock::now();
+
+        // Imprimimos mediciones
+        std::cout << "RESULTADOS DE GENERACIÓN DE FIRMA\n"
+                  << "Tiempo de ejecución: " << std::chrono::duration<double>(end_sign - start_sign).count() << "s\n"
+                  << "Ciclos de CPU: " << (cycles_sign_end - cycles_sign_start) << " ciclos\n";
+
+        std::cout << "Tamaño de la firma: " << signature.size() << " bytes\n\n\n";
+
+        // -------------- VERIFICACIÓN DE FIRMA -----------------------
+        
+        // Mediciones inicales de la verificación
+        auto start_verify = std::chrono::high_resolution_clock::now();
+        auto cycles_verify_start = cpucycles();
+
+        // Se crea el verificador
+        Botan::PK_Verifier verifier(pub_key, "");
+
+        // Y se verifica la firma del mensaje
+        if(verifier.check_signature(signature.data(), signature.size())) {
+            std::cout << "Firma Verificada." << std::endl;
+            
+        } else {
+            std::cout << "Firma Errónea." << std::endl;
+            
+        }
+
+        // Mediciones finales de la verificación
+        auto cycles_verify_end = cpucycles();
+        auto end_verify = std::chrono::high_resolution_clock::now();
+
+        std::cout << "RESULTADOS DE VERIFICACIÓN DE FIRMA\n"
+                  << "Tiempo de ejecución: " << std::chrono::duration<double>(end_verify - start_verify).count() << "s\n"
+                  << "Ciclos de CPU: " << (cycles_verify_end - cycles_verify_start) << " ciclos\n";
 
 
-    // ----------- FIRMA DEL MENSAJE -------------
-	
-	
-	// Se crea el mensaje de 4 bytes. Se utilizará este mismo mensaje para comparar los diferentes algoritmos de firma
-	Botan::secure_vector<uint8_t> msg1{0x01, 0x02, 0x03, 0x04};
-
-    // De nuevo se hacen las mediciones en el instante inicial del proceso de firma del mensaje. (se reutilizan las variables t1 y TT1)
-	t1=clock();
-    TT1=cpucycles();
-
-    
-	signer1.update(msg1.data(), msg1.size()); // Se almacena el mensaje y su tamaño en el objeto firmador
-	std::vector<uint8_t> sig1 = signer1.signature(rng1); // Y se procede a firmar
-
-    // Se toman las mediciones al final del proceso de firma
-	t2=clock();
-    TT2=cpucycles();
-	std::cout << "Tiempo transcurrido para la firma del mensaje: " << (double(t2-t1)/CLOCKS_PER_SEC) << " sg."<< std::endl;
-    std::cout << "Ciclos de CPU consumidos para la firma del mensaje: " << TT2-TT1 << std::endl;
-	
-    // ----------- VERIFICACIÓN DE LA FIRMA ------------- 
-    
-    
-    // Se toman las mediciones iniciales
-	t1=clock();
-    TT1 = cpucycles();
-
-
-	// Al igual que con el firmador, se crea un verificador con la clave pública (del firmador)
-	Botan::PK_Verifier verifier1(public_key1, "");
-
-	// Se almacena en el objeto verificador el mensaje original
-	verifier1.update(msg1.data(), msg1.size());
-	// Y se procede a verificar la firma
-	if(verifier1.check_signature(sig1.data(), sig1.size())) {
-		std::cout << "Success." << std::endl;
-		
-	} else {
-		std::cout << "Error." << std::endl;
-		
-	}
-
-    // Se toman las mediciones en el instante que termina el proceso de verificación y se imprimen.
-    t2 = clock();
-    TT2 = cpucycles();
-	std::cout << "Tiempo transcurrido para la verificación de la firma: " << (double(t2-t1)/CLOCKS_PER_SEC) << " sg."<< std::endl;
-    std::cout << "Ciclos de CPU consumidos para la verificación de la firma: " << TT2-TT1 << std::endl;
-
-
-    // Por último se toman las mediciones al final del algoritmo para obtener el tiempo total.
-	t2 = clock();
-	TT2 = cpucycles();
-	
-	std::cout << std::endl << std::endl << "Tiempo total de ejecución del algoritmo de firma XMSS: " << (double(t2-t0)/CLOCKS_PER_SEC) << " sg."<< std::endl;
-	std::cout << "Ciclos de CPU totales consumidos por el algoritmo de firma XMSS: " << TT2-TT0 << std::endl;
-
-
-   return 0;
-	
+    } catch (const std::exception& e) {
+        std::cerr << "Excepción en measure_xmss: " << e.what() << "\n";
+    }
 }
 
-//g++ -std=c++20 xmss.cpp -I/usr/local/include/botan-3 -lbotan-3
+int main() {
+    // Creamos un vector con los posibles sets de parámetros que tiene XMSS
+    std::vector<std::string> xmss_sets = {
+        "XMSS-SHA2_10_256", "XMSS-SHA2_16_256", "XMSS-SHA2_20_256",
+        "XMSS-SHA2_10_512", "XMSS-SHA2_16_512", "XMSS-SHA2_20_512",
+        "XMSS-SHAKE_10_256", "XMSS-SHAKE_16_256", "XMSS-SHAKE_20_256",
+        "XMSS-SHAKE_10_512", "XMSS-SHAKE_16_512", "XMSS-SHAKE_20_512",
+        "XMSS-SHA2_10_192", "XMSS-SHA2_16_192", "XMSS-SHA2_20_192",
+        "XMSS-SHAKE256_10_256", "XMSS-SHAKE256_16_256", "XMSS-SHAKE256_20_256",
+        "XMSS-SHAKE256_10_192", "XMSS-SHAKE256_16_192", "XMSS-SHAKE256_20_192"
+    };
+
+    // Proceso de elección del set
+    std::cout << "\nElige uno de los sets de parámetros XMSS:\n";
+    for(size_t i = 0; i < xmss_sets.size(); ++i) {
+        std::cout << "  " << i << ") " << xmss_sets[i] << "\n";
+    }
+    std::cout << "> ";
+    int choice = 0;
+    std::cin >> choice;
+
+    if(choice < 0 || static_cast<size_t>(choice) >= xmss_sets.size()) {
+        std::cerr << "Opcion invalida.\n";
+        return 1;
+    }
+
+    // Una vez elegido un set correcto, se llama a la función
+    std::string set_param = xmss_sets[choice];
+    measure_xmss(set_param);
+
+    return 0;
+}

@@ -35,7 +35,7 @@ void measure_xmss(Botan::XMSS_Parameters::xmss_algorithm_t algo) {
         auto cycles_keygen_start = cpucycles();
         
         Botan::XMSS_PrivateKey priv_key(algo, rng);
-        Botan::XMSS_PublicKey pub_key = priv_key;
+        const Botan::XMSS_PublicKey& pub_key(private_key);
         
         auto cycles_keygen_end = cpucycles();
         auto end_keygen = std::chrono::high_resolution_clock::now();
@@ -47,20 +47,27 @@ void measure_xmss(Botan::XMSS_Parameters::xmss_algorithm_t algo) {
         auto start_sign = std::chrono::high_resolution_clock::now();
         auto cycles_sign_start = cpucycles();
         
-        signer.update(msg.data(), msg.size());
-        auto signature = signer.signature(rng);
+        auto sig = signer.sign_message(msg, rng);
         
         auto cycles_sign_end = cpucycles();
         auto end_sign = std::chrono::high_resolution_clock::now();
         
         // 3. Verification
-        Botan::PK_Verifier verifier(pub_key, "");
+        
         
         auto start_verify = std::chrono::high_resolution_clock::now();
         auto cycles_verify_start = cpucycles();
         
-        verifier.update(msg.data(), msg.size());
-        bool valid = verifier.check_signature(signature.data(), signature.size());
+        Botan::PK_Verifier verifier(public_key, "");
+
+        // verify the signature for the previously generated message.
+        if(verifier.verify_message(msg, sig)) {
+            std::cout << "Success.\n";
+            return 0;
+        } else {
+            std::cout << "Error.\n";
+            return 1;
+        }
         
         auto cycles_verify_end = cpucycles();
         auto end_verify = std::chrono::high_resolution_clock::now();
@@ -85,7 +92,7 @@ void measure_xmss(Botan::XMSS_Parameters::xmss_algorithm_t algo) {
 
 int main() {
     // Test different configurations
-    measure_xmss(Botan::XMSS_Parameters::XMSS_SHAKE_20_512);
+    measure_xmss(Botan::XMSS_Parameters::XMSS_SHA2_10_256);
     //measure_xmss(Botan::XMSS_Parameters::XMSS_SHA2_10_256);
     return 0;
 }
