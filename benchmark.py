@@ -103,9 +103,9 @@ def ejecutar_comando(algoritmo, param, prehash=3): # PreHash = 3 -> No se utiliz
     print(f"\n[+] EJECUTANDO {param}", end="")
     comando = [f"./{algoritmo}", param]
     if prehash!= 3:
-        print(f"(prehash={"Sí" if prehash else "No"})")
+        print(f"(prehash={"Sí" if prehash else "No"})", end=)
         comando.insert(1, str(prehash))
-
+    print()
 
     resultado = subprocess.run(
         comando,
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     print("[+] SELECCIONA EL ALGORITMO:\n")
 
     
-    print("[0] Todos los algoritmos")
+    
     for key, algoritmo in ALGORITMOS.items():
         print(f"[{key}] {algoritmo}")
     
@@ -147,7 +147,6 @@ if __name__ == "__main__":
     print("\n[+] EJECUTANDO BENCHMARK PARA EL ALGORITMO:", algoritmo)
 
     if algoritmo == "SLH-DSA" or algoritmo == "TODOS":
-        algoritmo = "SLH-DSA"
         for prehash in [0, 1]:
             for param in SLHDSA_PARAMS:
 
@@ -157,39 +156,39 @@ if __name__ == "__main__":
                 else:
                     resultados.append("Sí")
 
-                code = ejecutar_comando(algoritmo, param, prehash)
+                code = ejecutar_comando("SLH-DSA", param, prehash)
                 if code != 0:
                     FALLOS += 1
 
         # Una vez se han probado todos los parámetros, se guardan los resultados en el CSV\
-        escribirCSV(algoritmo)
+        escribirCSV("SLH-DSA")
         
     if algoritmo == "XMSS" or algoritmo == "TODOS":
-        algoritmo = "XMSS"
+        
         for param in XMSS_PARAMS:
 
             resultados = [param, "N/A"]
 
-            code = ejecutar_comando(algoritmo, param, prehash)
+            code = ejecutar_comando("XMSS", param)
 
             if code != 0:
                 FALLOS += 1
 
         # Una vez se han probado todos los parámetros, se guardan los resultados en el CSV\
-        escribirCSV(algoritmo)
+        escribirCSV("XMSS")
 
     if algoritmo == "ML-DSA" or algoritmo == "TODOS":
-        algoritmo = "ML-DSA"
+        
         for param in MLDSA_PARAMS:
             resultados = [param, "N/A"]
 
-            code = ejecutar_comando(algoritmo, param, prehash)
+            code = ejecutar_comando("ML-DSA", param)
             
             if code != 0:
                 FALLOS += 1
 
         # Una vez se han probado todos los parámetros, se guardan los resultados en el CSV\
-        escribirCSV(algoritmo)
+        escribirCSV("ML-DSA")
 
     print("\n[+] BENCHMARK FINALIZADO")
     print(f"[+] FALLOS: {FALLOS}")
