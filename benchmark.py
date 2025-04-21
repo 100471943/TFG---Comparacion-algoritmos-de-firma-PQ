@@ -84,6 +84,10 @@ def extraer_resultados(salida):
         valor = extraer_valor(linea)
         if valor is not None:
             resultados.append(valor)
+        else:
+            if "Firma Errónea" in linea:
+                FALLOS += 1
+                print("Firma Errónea.")
 
     # Se calculan los ciclos totales y el tiempo total
     ciclos_totales = resultados[3] + resultados[7] + resultados[10]
