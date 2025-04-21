@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     try:
         num_algo = int(input("\n>> "))
-        if num_algo not in ALGORITMOS or num_algo != 0:
+        if num_algo not in ALGORITMOS and num_algo != 0:
             raise Exception
     except:
         print("\nIntroduce únicamente el número [0,1,2,3].")
