@@ -38,8 +38,7 @@ CABECERAS = ["Parametro", "Prehash", "Keygen_tiempo", "Keygen_ciclos","Tamaño_c
 # Resultados de los diferntes sets de parámetros
 resultados = []
 
-# Formato de salida CSV
-datos = [CABECERAS]
+
 
 # Contador de fallos. Un benchmark de un set falla cuando hay un error en la ejecución o la firma no se verifica correctamente.
 FALLOS = 0 
@@ -82,7 +81,8 @@ def extraer_resultados(salida):
     # El resto de valores van a venir en orden.
     for linea in salida.splitlines():
         valor = extraer_valor(linea)
-        if valor is not None:
+
+        if valor is not None and "SET DE" not in linea:
             resultados.append(valor)
         else:
             if "Firma Errónea" in linea:
@@ -151,6 +151,7 @@ if __name__ == "__main__":
     print("\n[+] EJECUTANDO BENCHMARK PARA EL ALGORITMO:", algoritmo)
 
     if algoritmo == "SLH-DSA" or algoritmo == "TODOS":
+        datos = [CABECERAS] # Estrucutura que se va a escribir en el CSV
         for prehash in [0, 1]:
             for param in SLHDSA_PARAMS:
 
@@ -168,7 +169,7 @@ if __name__ == "__main__":
         escribirCSV("SLH-DSA")
         
     if algoritmo == "XMSS" or algoritmo == "TODOS":
-        
+        datos = [CABECERAS] # Estrucutura que se va a escribir en el CSV
         for param in XMSS_PARAMS:
 
             resultados = [param, "N/A"]
@@ -182,7 +183,7 @@ if __name__ == "__main__":
         escribirCSV("XMSS")
 
     if algoritmo == "ML-DSA" or algoritmo == "TODOS":
-        
+        datos = [CABECERAS] # Estrucutura que se va a escribir en el CSV
         for param in MLDSA_PARAMS:
             resultados = [param, "N/A"]
 
