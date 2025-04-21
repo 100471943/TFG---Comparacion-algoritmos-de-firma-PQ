@@ -105,7 +105,7 @@ void measure_mldsa(const Botan::DilithiumMode::Mode mode, const std::string& nom
 
 
         // Se genera el verificador, utilizando la versión hedged.
-        Botan::PK_Verifier verifier(*pub_key, "Randomized");
+        Botan::PK_Verifier verifier(*pub_key, "");
         
         // Y se verifica la firma del mensaje
         verifier.update(msg.data(), msg.size());

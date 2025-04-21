@@ -107,7 +107,7 @@ def ejecutar_comando(algoritmo, param, prehash=3): # PreHash = 3 -> No se utiliz
     print(f"\n[+] EJECUTANDO {param}", end="")
     comando = [f"./{algoritmo}", param]
     if prehash!= 3:
-        print(f"(prehash={"Sí" if prehash else "No"})", end=)
+        print(f"(prehash={"Sí" if prehash else "No"})", end="")
         comando.insert(1, str(prehash))
     print()
 
