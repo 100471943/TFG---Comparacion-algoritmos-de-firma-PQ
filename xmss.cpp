@@ -140,9 +140,7 @@ int main(int argc, char* argv[])
         "XMSS-SHA2_10_512", "XMSS-SHA2_16_512", "XMSS-SHA2_20_512",
         "XMSS-SHAKE_10_256", "XMSS-SHAKE_16_256", "XMSS-SHAKE_20_256",
         "XMSS-SHAKE_10_512", "XMSS-SHAKE_16_512", "XMSS-SHAKE_20_512",
-        "XMSS-SHA2_10_192", "XMSS-SHA2_16_192", "XMSS-SHA2_20_192",
-        "XMSS-SHAKE256_10_256", "XMSS-SHAKE256_16_256", "XMSS-SHAKE256_20_256",
-        "XMSS-SHAKE256_10_192", "XMSS-SHAKE256_16_192", "XMSS-SHAKE256_20_192"
+        
     };
 
     std::string set_param; // Nombre del set de parámetros

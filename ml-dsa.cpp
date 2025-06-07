@@ -73,7 +73,7 @@ void measure_mldsa(const Botan::DilithiumMode::Mode mode, const std::string& nom
                   << "Ciclos de CPU: " << (cycles_keygen_end - cycles_keygen_start) << " ciclos\n";
 
         std::cout << "Tamaño de la clave pública: " << pub_key->public_key_bits().size() << " bytes\n";
-        std::cout << "Tamaño de la clave privada: " << priv_key.private_key_bits().size() << " bytes\n\n\n";
+        std::cout << "Tamaño de la clave privada: " << priv_key.raw_private_key_bits().size() << " bytes\n\n\n";
 
         // ---------------- GENERACIÓN DE FIRMA -----------------------
         Botan::secure_vector<uint8_t> msg{0x01, 0x02, 0x03, 0x04};
