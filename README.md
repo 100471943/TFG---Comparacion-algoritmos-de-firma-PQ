@@ -1,14 +1,14 @@
 # Pruebas de rendimiento de esquemas de firma post-cuánticos.
-Este es el repositorio con todo el código hecho para el Trabajo de Fin de Grado "Estudio comparativo del rendimiento de los estándares de firma digital post-cuánticos". Todo el código que se puede encontrar en este repositorio es propio. Únicamente en el fichero [generarRetículos.py](src/generarRetículos.py), para el cual se 
+Este es el repositorio con todo el código hecho para el Trabajo de Fin de Grado "Estudio comparativo del rendimiento de los estándares de firma digital post-cuánticos". Todo el código que se puede encontrar en este repositorio es propio. Únicamente en el fichero [generarRetículos.py](generarRetículos.py), para el cual se 
 utilizó ChatGPT durante su desarrollo, tal y como se especifica en el anexo de la memoria del TFG con la declaración del uso de la IA.
 
 Para la implenentación de los esquemas de firma se utiliza la librería criptográfica Botan: https://botan.randombit.net/
 
 ## Implementación de los esquemas de firma y sus pruebas
 En primer lugar, se puede encontrar los tres programas de C++ que evalúan el rendimiento de cada esquema de firma:
-- [ml-dsa.cpp](src/ml-dsa.cpp)
-- [xmss.cpp](src/xmss.cpp)
-- [slh-dsa.cpp](src/slh-dsa.cpp)
+- [ml-dsa.cpp](ml-dsa.cpp)
+- [xmss.cpp](xmss.cpp)
+- [slh-dsa.cpp](slh-dsa.cpp)
 
 Cada uno de estos scripts tiene los dos modos de ejecución especificados en la memoria. El primero es una ejecución normal, sin parámetros, en la que se ejecuta una pequeña consola interactica en la que se pude elegir el conjunto de parámetros a probar y, en el caso de que esté disponible,
 el utilizar o no pre-hash. El segundo modo de ejecución es pasando por parámetros el nombre del conjunto de parámetros a la hora de ejecutar el programa. Por ejemplo:
@@ -16,7 +16,7 @@ el utilizar o no pre-hash. El segundo modo de ejecución es pasando por parámet
 
 
 ## Fichero de automatización de pruebas
-Además de los tres progrmas de C++ con las implementaciones de los esquemas y sus pruebas, se incluye un script de Python [benchmark.py](src/benchmark.py). Al ejecutarlo, se ejecuta una consola interactiva en la que se puede elegir entre cuatro opciones: ejecutar todas las pruebas 
+Además de los tres progrmas de C++ con las implementaciones de los esquemas y sus pruebas, se incluye un script de Python [benchmark.py](benchmark.py). Al ejecutarlo, se ejecuta una consola interactiva en la que se puede elegir entre cuatro opciones: ejecutar todas las pruebas 
 con todos los conjuntos de parámetros de un esquema en concreto, o ejecutar todas las pruebas de todos los esquemas.
 
 ![image](https://github.com/user-attachments/assets/c16b6af5-f7c2-4788-b46d-944a654a2e68)
