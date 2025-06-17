@@ -12,7 +12,7 @@ En primer lugar, se puede encontrar los tres programas de C++ que evalúan el re
 
 Cada uno de estos scripts tiene los dos modos de ejecución especificados en la memoria. El primero es una ejecución normal, sin parámetros, en la que se ejecuta una pequeña consola interactica en la que se pude elegir el conjunto de parámetros a probar y, en el caso de que esté disponible,
 el utilizar o no pre-hash. El segundo modo de ejecución es pasando por parámetros el nombre del conjunto de parámetros a la hora de ejecutar el programa. Por ejemplo:
-<pre> ```bash ./xmss XMSS-SHA2_10_256``` </pre>
+<pre> ```./xmss XMSS-SHA2_10_256``` </pre>
 
 
 ## Fichero de automatización de pruebas
@@ -32,7 +32,7 @@ En los ficheros _csv_ se pueden encontrar los resultados de todas las pruebas qu
 A continuación de presentan unos pasos generales para realizar la instalación de la librería Botan en Ubuntu. Para más información sobre la instalación en Ubuntu o en cualquier otro sistema opertivo, se puede consultar la [guía de instalación](https://botan.randombit.net/handbook/building.html) oficial de Botan.
 
 Antes de empezar con la instalación, hay que instalar algunas dependencias:
-<pre> ```bash sudo apt install git, g++, make``` </pre>
+<pre> ```sudo apt install git, g++, make``` </pre>
 
 1. Clonar el repositorio de Botan `git clone https://github.com/randombit/botan.git`
 2. `cd botan`
